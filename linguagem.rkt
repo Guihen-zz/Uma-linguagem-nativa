@@ -37,3 +37,9 @@
     [número (n) n]
     [adição (x y) (+ (interpreta x) (interpreta y))]
     [multiplicação (x y) (* (interpreta x) (interpreta y))]))
+
+(define (console) : number
+  (interpreta (traduz (analisa (read)))))
+
+(define (executa [expressão : s-expression]) : number
+  (interpreta (traduz (analisa expressão))))
