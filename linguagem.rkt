@@ -10,7 +10,8 @@
   [número-extendido (n : number)]
   [adição-extendida (x : Símbolo-aritmético-extendido) (y : Símbolo-aritmético-extendido)]
   [multiplicação-extendida (x : Símbolo-aritmético-extendido) (y : Símbolo-aritmético-extendido)]
-  [subtração (x : Símbolo-aritmético-extendido) (y : Símbolo-aritmético-extendido)])
+  [subtração (x : Símbolo-aritmético-extendido) (y : Símbolo-aritmético-extendido)]
+  [oposto-de (x : Símbolo-aritmético-extendido)])
 
 ; Definição das ferramentas da linguagem.
 (define (traduz [extensão-da-linguagem : Símbolo-aritmético-extendido]) : Símbolo-aritmético
@@ -18,7 +19,8 @@
     [número-extendido (n) (número n)]
     [adição-extendida (x y) (adição (traduz x) (traduz y))]
     [multiplicação-extendida (x y) (multiplicação (traduz x) (traduz y))]
-    [subtração (x y) (adição (traduz x) (multiplicação (número -1) (traduz y)))]))
+    [subtração (x y) (adição (traduz x) (multiplicação (número -1) (traduz y)))]
+    [oposto-de (x) (multiplicação (número -1) (traduz x))]))
 
 (define (analisa [entrada : s-expression]) : Símbolo-aritmético-extendido
   (cond
@@ -29,6 +31,7 @@
          [(+) (adição-extendida (analisa (second lista)) (analisa (third lista)))]
          [(*) (multiplicação-extendida (analisa (second lista)) (analisa (third lista)))]
          [(-) (subtração (analisa (second lista)) (analisa (third lista)))]
+         [(!) (oposto-de (analisa (second lista)))]
          [else (error 'analisa "A lista dada possui entradas inválida")]))]
      [else (error 'analisa "Entrada inválida")]))
 
@@ -49,3 +52,4 @@
 (test (executa '(* 2 5)) 10)
 (test (executa '(- 1 5)) -4)
 (test (executa '(- (+ 1 (* 2 5)) (+ 1 2))) 8) ; interação soma, subtração e multiplicação
+(test (executa '(! 1)) -1)
