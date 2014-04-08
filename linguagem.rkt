@@ -43,3 +43,9 @@
 
 (define (executa [expressão : s-expression]) : number
   (interpreta (traduz (analisa expressão))))
+
+; Testes da linguagem
+(test (executa '(+ 1 5)) 6)
+(test (executa '(* 2 5)) 10)
+(test (executa '(- 1 5)) -4)
+(test (executa '(- (+ 1 (* 2 5)) (+ 1 2))) 8) ; interação soma, subtração e multiplicação
