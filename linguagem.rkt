@@ -1,28 +1,31 @@
 #lang plai-typed
 
 ; Definição dos símbolos da linguagem.
-(define-type Símbolo-aritmético
+(define-type Expressão-aritmética
   [número (n : number)]
-  [adição (x : Símbolo-aritmético) (y : Símbolo-aritmético)]
-  [multiplicação (x : Símbolo-aritmético) (y : Símbolo-aritmético)])
+  [adição (x : Expressão-aritmética) (y : Expressão-aritmética)]
+  [multiplicação (x : Expressão-aritmética) (y : Expressão-aritmética)])
 
-(define-type Símbolo-aritmético-extendido
+(define-type Expressão-aritmética-extendida
   [número-extendido (n : number)]
-  [adição-extendida (x : Símbolo-aritmético-extendido) (y : Símbolo-aritmético-extendido)]
-  [multiplicação-extendida (x : Símbolo-aritmético-extendido) (y : Símbolo-aritmético-extendido)]
-  [subtração (x : Símbolo-aritmético-extendido) (y : Símbolo-aritmético-extendido)]
-  [oposto-de (x : Símbolo-aritmético-extendido)])
+  [adição-extendida (x : Expressão-aritmética-extendida) (y : Expressão-aritmética-extendida)]
+  [multiplicação-extendida (x : Expressão-aritmética-extendida) (y : Expressão-aritmética-extendida)]
+  [subtração (x : Expressão-aritmética-extendida) (y : Expressão-aritmética-extendida)]
+  [oposto-de (x : Expressão-aritmética-extendida)])
+
+(define-type Função
+  [função-unária (nome : symbol) (parâmetro : symbol) (corpo : Expressão-aritmética)])
 
 ; Definição das ferramentas da linguagem.
-(define (traduz [extensão-da-linguagem : Símbolo-aritmético-extendido]) : Símbolo-aritmético
-  (type-case Símbolo-aritmético-extendido extensão-da-linguagem
+(define (traduz [extensão-da-linguagem : Expressão-aritmética-extendida]) : Expressão-aritmética
+  (type-case Expressão-aritmética-extendida extensão-da-linguagem
     [número-extendido (n) (número n)]
     [adição-extendida (x y) (adição (traduz x) (traduz y))]
     [multiplicação-extendida (x y) (multiplicação (traduz x) (traduz y))]
     [subtração (x y) (adição (traduz x) (multiplicação (número -1) (traduz y)))]
     [oposto-de (x) (multiplicação (número -1) (traduz x))]))
 
-(define (analisa [entrada : s-expression]) : Símbolo-aritmético-extendido
+(define (analisa [entrada : s-expression]) : Expressão-aritmética-extendida
   (cond
     [(s-exp-number? entrada) (número-extendido (s-exp->number entrada))]
     [(s-exp-list? entrada)
@@ -35,8 +38,8 @@
          [else (error 'analisa "A lista dada possui entradas inválida")]))]
      [else (error 'analisa "Entrada inválida")]))
 
-(define (interpreta [expressão : Símbolo-aritmético]) : number
-  (type-case Símbolo-aritmético expressão
+(define (interpreta [expressão : Expressão-aritmética]) : number
+  (type-case Expressão-aritmética expressão
     [número (n) n]
     [adição (x y) (+ (interpreta x) (interpreta y))]
     [multiplicação (x y) (* (interpreta x) (interpreta y))]))
