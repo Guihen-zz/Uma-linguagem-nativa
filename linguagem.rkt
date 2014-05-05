@@ -4,14 +4,17 @@
 (define-type Expressão-aritmética
   [número (n : number)]
   [adição (x : Expressão-aritmética) (y : Expressão-aritmética)]
-  [multiplicação (x : Expressão-aritmética) (y : Expressão-aritmética)])
+  [multiplicação (x : Expressão-aritmética) (y : Expressão-aritmética)]
+  [igual-a-zero? (x : Expressão-aritmética) (faça : Expressão-aritmética) (senão : Expressão-aritmética)])
 
+; Definição das extensões da linguagem.
 (define-type Expressão-aritmética-extendida
   [número-extendido (n : number)]
   [adição-extendida (x : Expressão-aritmética-extendida) (y : Expressão-aritmética-extendida)]
   [multiplicação-extendida (x : Expressão-aritmética-extendida) (y : Expressão-aritmética-extendida)]
   [subtração (x : Expressão-aritmética-extendida) (y : Expressão-aritmética-extendida)]
-  [oposto-de (x : Expressão-aritmética-extendida)])
+  [oposto-de (x : Expressão-aritmética-extendida)]
+  [igual-a-zero?-extendido (x : Expressão-aritmética-extendida) (faça : Expressão-aritmética-extendida) (senão : Expressão-aritmética-extendida)])
 
 (define-type Função
   [função-unária (nome : symbol) (parâmetro : symbol) (corpo : Expressão-aritmética)])
@@ -23,7 +26,8 @@
     [adição-extendida (x y) (adição (traduz x) (traduz y))]
     [multiplicação-extendida (x y) (multiplicação (traduz x) (traduz y))]
     [subtração (x y) (adição (traduz x) (multiplicação (número -1) (traduz y)))]
-    [oposto-de (x) (multiplicação (número -1) (traduz x))]))
+    [oposto-de (x) (multiplicação (número -1) (traduz x))]
+    [igual-a-zero?-extendido (expressão sim senão) (igual-a-zero? (traduz expressão) (traduz sim) (traduz senão))]))
 
 (define (analisa [entrada : s-expression]) : Expressão-aritmética-extendida
   (cond
@@ -35,6 +39,7 @@
          [(*) (multiplicação-extendida (analisa (second lista)) (analisa (third lista)))]
          [(-) (subtração (analisa (second lista)) (analisa (third lista)))]
          [(!) (oposto-de (analisa (second lista)))]
+         [(igual-a-zero?) (igual-a-zero?-extendido (analisa (second lista)) (analisa (third lista)) (analisa (fourth lista)))]
          [else (error 'analisa "A lista dada possui entradas inválida")]))]
      [else (error 'analisa "Entrada inválida")]))
 
@@ -42,7 +47,8 @@
   (type-case Expressão-aritmética expressão
     [número (n) n]
     [adição (x y) (+ (interpreta x) (interpreta y))]
-    [multiplicação (x y) (* (interpreta x) (interpreta y))]))
+    [multiplicação (x y) (* (interpreta x) (interpreta y))]
+    [igual-a-zero? (expressão sim senão) (if (zero? (interpreta expressão)) (interpreta sim) (interpreta senão))]))
 
 (define (console) : number
   (interpreta (traduz (analisa (read)))))
@@ -56,3 +62,5 @@
 (test (executa '(- 1 5)) -4)
 (test (executa '(- (+ 1 (* 2 5)) (+ 1 2))) 8) ; interação soma, subtração e multiplicação
 (test (executa '(! 1)) -1)
+(test (executa '(igual-a-zero? (+ 4 (! 4)) (* 2 2) (- 2 3))) 4) ; caso positivo
+(test (executa '(igual-a-zero? (- 4 (! 4)) (* 2 2) (- 2 3))) -1) ; caso negativo
