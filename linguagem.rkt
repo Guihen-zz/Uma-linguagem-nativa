@@ -50,6 +50,22 @@
         [(equal? nome (função-unária-nome (first conjunto-de-funções))) (first conjunto-de-funções)]
         [else (busca-função nome (rest conjunto-de-funções))])]))
 
+;========================================================================;
+; Implementação do Ambiente da linguagem.
+(define-type Associação
+  [associação (rótulo : symbol) (valor : number)])
+
+(define-type-alias Ambiente (listof Associação))
+(define ambiente-vazio empty) ; empty := lista vazia
+(define estende-ambiente cons) ; cons recebe dois argumentos e cria uma lista
+(define (busca-associação [rótulo : symbol] [ambiente : Ambiente]) : number
+  (cond 
+    [(empty? ambiente) (error 'busca-associação "Associação não encontrada!")]
+    [else (cond
+            [(symbol=? rótulo (associação-rótulo (first ambiente))) (associação-valor (first ambiente))]
+            [else (busca-associação rótulo (rest ambiente))])]))
+
+;========================================================================;
 ; Definição das ferramentas da linguagem.
 (define (traduz [extensão-da-linguagem : Expressão-aritmética-extendida]) : Expressão-aritmética
   (type-case Expressão-aritmética-extendida extensão-da-linguagem
@@ -77,29 +93,32 @@
          [else (error 'analisa "A lista dada possui entradas inválida")]))]
      [else (error 'analisa "Entrada inválida")]))
 
-(define (interpreta [expressão : Expressão-aritmética] [conjunto-de-funções : (listof Função)]) : number
+(define (interpreta [expressão : Expressão-aritmética] [ambiente : Ambiente] [conjunto-de-funções : (listof Função)]) : number
   (type-case Expressão-aritmética expressão
     [número (n) n]
-    [adição (x y) (+ (interpreta x conjunto-de-funções) (interpreta y conjunto-de-funções))]
-    [multiplicação (x y) (* (interpreta x conjunto-de-funções) (interpreta y conjunto-de-funções))]
-    [igual-a-zero? (expressão faça senão) (if (zero? (interpreta expressão conjunto-de-funções)) 
-        (interpreta faça conjunto-de-funções) (interpreta senão conjunto-de-funções))]
-    [nome (_) (error 'interpreta "Erro ao interpretar expressão: não deve existir nomes livres na expressão.")]
+    [adição (x y) (+ (interpreta x ambiente conjunto-de-funções) (interpreta y ambiente conjunto-de-funções))]
+    [multiplicação (x y) (* (interpreta x ambiente conjunto-de-funções) (interpreta y ambiente conjunto-de-funções))]
+    [igual-a-zero? (expressão faça senão) (if (zero? (interpreta expressão ambiente conjunto-de-funções)) 
+        (interpreta faça ambiente conjunto-de-funções) (interpreta senão ambiente conjunto-de-funções))]
+    [nome (n) (busca-associação n ambiente)]
     [aplicação (função argumento) 
           (local ([define f (busca-função função conjunto-de-funções)])
-            (interpreta (instancia-função (função-unária-corpo f)
-                  (função-unária-parâmetro f) argumento) conjunto-de-funções))]))
-
+            (interpreta (função-unária-corpo f)
+                  (estende-ambiente (associação (função-unária-parâmetro f) 
+                             (interpreta argumento ambiente conjunto-de-funções)) 
+                            ambiente) conjunto-de-funções))]))
+;========================================================================;
 ; Interface da linguagem
 (define biblioteca-nativa
   (list [função-unária 'dobro 'x (adição (nome 'x) (nome 'x))]))
 
 (define (console) : number
-  (interpreta (traduz (analisa (read))) biblioteca-nativa))
+  (interpreta (traduz (analisa (read))) ambiente-vazio biblioteca-nativa))
 
 (define (executa [expressão : s-expression]) : number
-  (interpreta (traduz (analisa expressão)) biblioteca-nativa))
+  (interpreta (traduz (analisa expressão)) ambiente-vazio biblioteca-nativa))
 
+;========================================================================;
 ; Testes da linguagem
 (test (executa '(+ 1 5)) 6)
 (test (executa '(* 2 5)) 10)
